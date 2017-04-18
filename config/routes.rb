@@ -1,5 +1,15 @@
 Rails.application.routes.draw do
 
+  get 'wikis/new'
+
+  get 'wikis/create'
+
+  get 'wikis/show'
+
+  get 'wikis/edit'
+
+  get 'wikis/destroy'
+
   devise_for :users
   get 'about' => 'welcome#about'
 
