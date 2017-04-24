@@ -22,7 +22,13 @@ module RandomData
   def self.random_word
     letters = ('a'..'z').to_a
     letters.shuffle!
-    letters[0,rand(3..8)].join
+    letters[0,rand(6..9)].join
+  end
+
+  def self.random_email
+    rand1 = random_word
+    rand2 = random_word
+    email = rand1 + "@" + rand2 + ".com"
   end
 
 end

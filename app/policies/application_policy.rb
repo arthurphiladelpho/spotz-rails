@@ -5,5 +5,4 @@ class ApplicationPolicy
     @user = user
     @record = record
   end
-
 end
