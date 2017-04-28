@@ -4,6 +4,8 @@
  
   <%= f.label :body %>
   <%= f.text_area :body %>
+
+    <%= render partial: 'form', locals: { wiki: @wiki } %>
  
   <%= f.submit "Save" %>
 <% end %>
