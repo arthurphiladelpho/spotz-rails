@@ -5,12 +5,10 @@ class WikiPolicy < ApplicationPolicy
 			if user.admin? || user.premimum?
 				scope.all
 			else
-				scope.where(:public => true)
+				scope.where(:publik => true)
 			end
 		end
 	end
-
-
 
 	def index?
 		@user

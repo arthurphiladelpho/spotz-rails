@@ -1,6 +1,6 @@
 class Wiki < ActiveRecord::Base
   belongs_to :user
-  after_initialize {self.role ||= :public}
+  after_initialize {self.role ||= :publik}
 
-  enum role [:public, :premium]
+  enum role: [:publik, :premium]
 end
