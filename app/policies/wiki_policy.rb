@@ -1,5 +1,17 @@
 class WikiPolicy < ApplicationPolicy
 
+	class Scope < Scope
+		def resolve 
+			if user.admin? || user.premimum?
+				scope.all
+			else
+				scope.where(:public => true)
+			end
+		end
+	end
+
+
+
 	def index?
 		@user
 	end
