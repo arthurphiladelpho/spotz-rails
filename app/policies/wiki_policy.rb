@@ -1,41 +1,24 @@
-class WikiPolicy < ApplicationPolicy
+class WikiPolicy
+	attr_reader :wiki, :user
 
-	class Scope < Scope
-		def resolve 
-			if user.admin? || user.premimum?
-				scope.all
-			else
-				scope.where(:publik => true)
-			end
-		end
-	end
+	def initialize(user, wiki)
+		@user = user
+		@wiki = wiki
+	end	
 
 	def index?
-		@user
+		user.admin?
 	end
 
 	def show?
-		@user
-	end
-
-	def new?
-		@user
-	end
-
-	def create?
-		@user
-	end
-
-	def edit?
-		@user
+		user.admin?
 	end
 
 	def update?
-		@user
+		user.admin?
 	end
 
 	def destroy?
-		@user && @user.admin?
+		user.admin?
 	end
-
 end

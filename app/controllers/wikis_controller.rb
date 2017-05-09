@@ -4,7 +4,11 @@ class WikisController < ApplicationController
 
 
   def index
-    @wikis = Wiki.all
+    if user_can_view_private_wiki?
+      @wikis = Wiki.all
+    else
+      @wikis = Wiki.public?
+    end 
   end
 
   def new
@@ -64,5 +68,12 @@ class WikisController < ApplicationController
       redirect_to @wiki
     end
   end
+
+  private 
+
+  def user_can_view_private_wiki?
+    (current_user.admin? || current_user.premium?)
+  
+  end  
 
 end
