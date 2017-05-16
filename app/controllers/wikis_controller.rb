@@ -2,9 +2,12 @@ class WikisController < ApplicationController
 
   before_action :authorize_user, only: [:destroy]
 
-
   def index
-    @wikis = Wiki.all
+    if user_admin_or_premium?
+      @wikis = Wiki.all
+    else
+      @wikis = Wiki.public  
+    end  
   end
 
   def new
@@ -64,5 +67,11 @@ class WikisController < ApplicationController
       redirect_to @wiki
     end
   end
+
+  private
+
+  def user_admin_or_premium?
+    (current_user.admin? || current_user.premium?)
+  end 
 
 end

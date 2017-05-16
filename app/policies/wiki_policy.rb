@@ -1,31 +1,39 @@
-class WikiPolicy < ApplicationPolicy
+class WikiPolicy
+
+	attr_reader :user, :wiki
+
+	def initialize(user, wiki)
+	  @user = user
+	  @wiki = wiki
+	end
+
+	class Scope
+    attr_reader :user, :scope
+
+      def initialize(user, scope)
+        @user = user
+        @scope = scope
+      end
+
+      def resolve
+        if user.admin? || user.premium?
+          scope.all
+        else
+          scope.where(user: user)
+        end
+      end
+  end
 
 	def index?
-		@user
+		@user.admin? || @user.premium?
 	end
 
 	def show?
-		@user
-	end
-
-	def new?
-		@user
-	end
-
-	def create?
-		@user
-	end
-
-	def edit?
-		@user
-	end
-
-	def update?
-		@user
+		@user.admin? || @user.premium?
 	end
 
 	def destroy?
-		@user && @user.admin?
+		@user.admin?
 	end
 
 end
