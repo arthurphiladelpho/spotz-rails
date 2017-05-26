@@ -7,17 +7,15 @@ class WikisController < ApplicationController
   end
 
   def new
-    @user_options = User.all.map { |u| [ u.email, u.id] }
+    @user = current_user
     @wiki = Wiki.new
-    authorize @wiki
   end
 
   def create
+    @user = current_user
     @wiki = Wiki.new
     @wiki.title = params[:wiki][:title]
     @wiki.body = params[:wiki][:body]
-    @user_options = User.all.map { |u| [ u.email, u.id] }
-    authorize @wiki
     if @wiki.save
       flash[:notice] = "Wiki was saved."
       redirect_to @wiki
@@ -29,12 +27,12 @@ class WikisController < ApplicationController
 
   def show
     @wiki = Wiki.find(params[:id])
-    @collaboration = @wiki.collaborators.map { |c| [c.email, c.id] }
-    authorize @wiki
+    @collaboration = @wiki.collaborators.new
   end
 
   def edit
     @wiki = Wiki.find(params[:id])
+    @collaborator = Collaborator.new
   end
 
   def update
