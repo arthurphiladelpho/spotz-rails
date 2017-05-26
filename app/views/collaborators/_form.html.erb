@@ -1,0 +1,7 @@
+<%= f.label :collaborator %>
+
+<% if collaborator %>
+  <%= f.select :collaborator, options_for_select(@user_options) %>
+<% else %>
+  <%= f.select :collaborator, options_for_select(@user_options) %>
+<% end %>

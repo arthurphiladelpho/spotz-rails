@@ -5,4 +5,5 @@
 <p>
 	<%= link_to "Edit", edit_wiki_path(@wiki)%>
 	<%= link_to "Delete Wiki", @wiki, method: :delete, data: {confirm: 'Are you sure you want to delete this post?'} %>
+	Collaborators : <%= @collaboration %>
 </p>
