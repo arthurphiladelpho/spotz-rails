@@ -17,13 +17,13 @@ class WikiPolicy
 
     def resolve
       wikis = []
-      if user.role == 'admin' || user.role == 'premium'
+      if user.admin? || user.premium?
         wikis = scope.all # if the user is an admin, show them all the wikis
       else # this is the lowly standard user
         all_wikis = scope.all
         wikis = []
         all_wikis.each do |wiki|
-          if wiki.public?
+          if wiki.public? || wiki.collaborators.include?(user)
             wikis << wiki # only show standard users public wikis and private wikis they are a collaborator on
           end
         end
