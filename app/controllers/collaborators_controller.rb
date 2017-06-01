@@ -8,14 +8,8 @@ class CollaboratorsController < ApplicationController
   def create
     @wiki = Wiki.find(params[:wiki_id])
     @user = User.find_by(email: params[:email])
-    @collaborator = WikiCollaborator.new
-    # --- Tried this:
-    # @collaborator.wiki = Wiki.find(params[:wiki_id])
-    # @collaborator.user = User.find_by(email: params[:email])
-    # --- And:
-    # @collaborator.wiki = @wiki
-    # @collaborator.user = @user
-    # --- WikiCollaborator.count still is 0 (zero).
+    @collaborator = WikiCollaborator.new({ wiki: @wiki, user: @user })
+
     if @collaborator.save
       flash[:notice] = "Collaborator was added to this wiki."
       redirect_to @wiki

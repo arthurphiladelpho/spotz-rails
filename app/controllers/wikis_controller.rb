@@ -19,7 +19,9 @@ class WikisController < ApplicationController
     @wiki.public = params[:wiki][:public]
     if @wiki.save
       flash[:notice] = "Wiki was saved."
-      redirect_to @wiki
+      #redirect_to @wiki
+      # call the collaborators controller create action
+      # create the collaborator here
     else
       flash.now[:alert] = "There was an error saving the post. Please try again."
       render :new
