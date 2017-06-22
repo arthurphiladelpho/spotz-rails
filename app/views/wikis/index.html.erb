@@ -8,7 +8,7 @@
 			<% is_collab = false %>
 		<% end %>
 	<% end %>
-	<% if wiki.public? || (current_user.role == 'admin' || 'premium' ) || is_collab %>
+	<% if wiki.public? || (current_user.role == 'admin' || 'premium' ) || is_collab || (wiki.user_id == current_user.id) %>
   	<p><%= link_to wiki.title, wiki_path(wiki) %></p>
   <% end %>
 <% end %>
