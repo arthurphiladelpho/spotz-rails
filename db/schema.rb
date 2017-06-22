@@ -52,8 +52,8 @@ ActiveRecord::Schema.define(version: 20170526163901) do
     t.text     "body"
     t.boolean  "private"
     t.integer  "user_id"
-    t.datetime "created_at",                null: false
-    t.datetime "updated_at",                null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
     t.boolean  "public",     default: true
   end
 

@@ -1,6 +1,6 @@
 require 'random_data'
 
-50.times do
+10.times do
 
 	User.create!(
 		email: Faker::Internet.unique.email,
@@ -11,7 +11,7 @@ end
 
 users = User.all
 
-150.times do
+40.times do
 
 	Wiki.create!(
 		title: Faker::Pokemon.unique.name,

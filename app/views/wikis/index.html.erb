@@ -1,4 +1,14 @@
 <h1>Wikis</h1>
 <% @wikis.each do |wiki| %>
-  <p><%= link_to wiki.title, wiki_path(wiki) %></p>
+	<% wiki.collaborators.each do |collab| %>
+		<% if collab.id == current_user.id %>
+			<% is_collab = true %>
+			<% break %>
+		<% else %>
+			<% is_collab = false %>
+		<% end %>
+	<% end %>
+	<% if wiki.public? || (current_user.role == 'admin' || 'premium' ) || is_collab %>
+  	<p><%= link_to wiki.title, wiki_path(wiki) %></p>
+  <% end %>
 <% end %>

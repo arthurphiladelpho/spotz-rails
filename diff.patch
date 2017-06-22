@@ -1,0 +1,430 @@
+diff --git a/app/controllers/collaborators_controller.rb b/app/controllers/collaborators_controller.rb
+deleted file mode 100644
+index 83306cb..0000000
+--- a/app/controllers/collaborators_controller.rb
++++ /dev/null
+@@ -1,40 +0,0 @@
+-class CollaboratorsController < ApplicationController
+-  
+-  def new
+-    @wiki = Wiki.find(params[:wiki_id])
+-    @collaborator = WikiCollaborator.new
+-  end
+-
+-  def create
+-    @wiki = Wiki.find(params[:wiki_id])
+-    @user = User.find_by(email: params[:email])
+-    @collaborator = WikiCollaborator.new({ wiki: @wiki, user: @user })
+-
+-    if @collaborator.save
+-      flash[:notice] = "Collaborator was added to this wiki."
+-      redirect_to @wiki
+-    else
+-      flash[:error] = "Collaborator was not added. Please try again."
+-      render :show
+-    end
+-   end
+-
+-  def destroy
+-    @collaborator = Collaborator.find(params[:id])
+-
+-    if @collaborator.destroy
+-      flash[:notice] = "Collaborator was removed from this wiki."
+-      redirect_to @wiki
+-    else
+-      flash[:error] = "Collaborator was not removed. Please try again."
+-      render :show
+-    end
+-   end
+-
+-  private
+-
+-  def collaboration_params
+-    params.require(:collaborator).permit(:user_id)
+-  end
+-
+-end
+\ No newline at end of file
+diff --git a/app/controllers/wikis_controller.rb b/app/controllers/wikis_controller.rb
+index 0827149..3f7b07a 100644
+--- a/app/controllers/wikis_controller.rb
++++ b/app/controllers/wikis_controller.rb
+@@ -3,25 +3,25 @@ class WikisController < ApplicationController
+   before_action :authorize_user, only: [:destroy]
+ 
+   def index
+-    @wikis = policy_scope(Wiki)
++    if user_admin_or_premium?
++      @wikis = Wiki.all
++    else
++      @wikis = Wiki.public  
++    end  
+   end
+ 
+   def new
+-    @user = current_user
+     @wiki = Wiki.new
+   end
+ 
+   def create
+-    @user = current_user
+     @wiki = Wiki.new
+     @wiki.title = params[:wiki][:title]
+     @wiki.body = params[:wiki][:body]
+-    @wiki.public = params[:wiki][:public]
++
+     if @wiki.save
+       flash[:notice] = "Wiki was saved."
+-      #redirect_to @wiki
+-      # call the collaborators controller create action
+-      # create the collaborator here
++      redirect_to @wiki
+     else
+       flash.now[:alert] = "There was an error saving the post. Please try again."
+       render :new
+@@ -30,12 +30,10 @@ class WikisController < ApplicationController
+ 
+   def show
+     @wiki = Wiki.find(params[:id])
+-    @collaboration = @wiki.collaborators.new
+   end
+ 
+   def edit
+     @wiki = Wiki.find(params[:id])
+-    @collaborator = Collaborator.new
+   end
+ 
+   def update
+diff --git a/app/models/user.rb b/app/models/user.rb
+index eabf338..02b64ae 100644
+--- a/app/models/user.rb
++++ b/app/models/user.rb
+@@ -6,9 +6,6 @@ class User < ActiveRecord::Base
+          :confirmable
+ 
+   has_many :wikis, dependent: :destroy
+-  has_many :wiki_collaborators
+-  has_many :collaborators, through: :wiki_collaborators
+-
+   after_initialize { self.role ||= :standard }
+ 
+   enum role: [:standard, :admin, :premium]
+diff --git a/app/models/wiki.rb b/app/models/wiki.rb
+index 306d62e..4dde69c 100644
+--- a/app/models/wiki.rb
++++ b/app/models/wiki.rb
+@@ -1,8 +1,5 @@
+ class Wiki < ActiveRecord::Base
+   belongs_to :user
+-  has_many :wiki_collaborators
+-  has_many :collaborators, through: :wiki_collaborators, source: :user
+-
+ 
+   def self.public
+   	where(public: true)
+diff --git a/app/models/wiki_collaborator.rb b/app/models/wiki_collaborator.rb
+deleted file mode 100644
+index 97b7157..0000000
+--- a/app/models/wiki_collaborator.rb
++++ /dev/null
+@@ -1,7 +0,0 @@
+-class WikiCollaborator < ActiveRecord::Base
+-	belongs_to :user
+-	belongs_to :wiki
+-
+-	@user_options = User.all.map { |user| [user.email, user.id]}
+-
+-end
+diff --git a/app/policies/collaborator_policy.rb b/app/policies/collaborator_policy.rb
+deleted file mode 100644
+index bf34a0c..0000000
+--- a/app/policies/collaborator_policy.rb
++++ /dev/null
+@@ -1,12 +0,0 @@
+-class CollaborationPolicy < ApplicationPolicy
+-  def create?
+-    user.present? && (record.user == user) && user.role?(:premium)
+-  end
+-
+-  class Scope < Scope
+-    def resolve
+-      scope
+-    end
+-  end
+-
+-end
+\ No newline at end of file
+diff --git a/app/policies/wiki_policy.rb b/app/policies/wiki_policy.rb
+index 7b420c1..84c726b 100644
+--- a/app/policies/wiki_policy.rb
++++ b/app/policies/wiki_policy.rb
+@@ -10,26 +10,18 @@ class WikiPolicy
+ 	class Scope
+     attr_reader :user, :scope
+ 
+-    def initialize(user, scope)
+-      @user = user
+-      @scope = scope
+-    end
+-
+-    def resolve
+-      wikis = []
+-      if user.admin? || user.premium?
+-        wikis = scope.all # if the user is an admin, show them all the wikis
+-      else # this is the lowly standard user
+-        all_wikis = scope.all
+-        wikis = []
+-        all_wikis.each do |wiki|
+-          if wiki.public? || wiki.collaborators.include?(user)
+-            wikis << wiki # only show standard users public wikis and private wikis they are a collaborator on
+-          end
++      def initialize(user, scope)
++        @user = user
++        @scope = scope
++      end
++
++      def resolve
++        if user.admin? || user.premium?
++          scope.all
++        else
++          scope.where(user: user)
+         end
+       end
+-      wikis # return the wikis array we've built up
+-    end
+   end
+ 
+ 	def index?
+diff --git a/app/views/collaborators/_form.html.erb b/app/views/collaborators/_form.html.erb
+deleted file mode 100644
+index 78de92e..0000000
+--- a/app/views/collaborators/_form.html.erb
++++ /dev/null
+@@ -1,5 +0,0 @@
+-<div class="form-group">
+-	<%= hidden_field_tag(:wiki_id, value: @wiki.id) %>
+-	<%= label_tag(:email, "Collaborator email") %> <br>
+-	<%= f.select :user_id, options_from_collection_for_select(User.all, "id", "email") %>
+-</div>
+\ No newline at end of file
+diff --git a/app/views/collaborators/_users.html.erb b/app/views/collaborators/_users.html.erb
+deleted file mode 100644
+index 364af26..0000000
+--- a/app/views/collaborators/_users.html.erb
++++ /dev/null
+@@ -1,8 +0,0 @@
+-<h4>Collaborators</h4>
+-<ul>
+-	<% @wiki.collaborators.each do |collaborator| %>
+-		<li>
+-			<%= collaborator.user.name %> <%= link_to "", "/wikis/#{@wiki.id}/collaborators/#{collaborator.id}", method: :delete, class: 'glyphicon glyphicon-remove' %>
+-		</li>
+-	<% end %>
+-</ul>
+\ No newline at end of file
+diff --git a/app/views/collaborators/new.html.erb b/app/views/collaborators/new.html.erb
+deleted file mode 100644
+index 8e2b62c..0000000
+--- a/app/views/collaborators/new.html.erb
++++ /dev/null
+@@ -1,24 +0,0 @@
+-<h1>Add Collaborator</h1>
+-
+-<%= form_for [@wiki, @collaboration] do |f| %>
+-
+-  <% if @wiki.errors.any? %>
+-     <div class="alert alert-danger">
+-       <h4>There are <%= pluralize(@wiki.errors.count, "error") %>.</h4>
+-       <ul>
+-         <% @wiki.errors.full_messages.each do |msg| %>
+-           <li><%= msg %></li>
+-         <% end %>
+-       </ul>
+-     </div>
+-  <% end %>
+-
+-  <%= form_group_tag(@wiki.errors[:user]) do %>
+-    <%= f.label :user %>
+-    <%= f.select :user_id, options_from_collection_for_select(User.all, "id", "email") %>
+-  <% end %>
+-
+-  <div class="form-group">
+-     <%= f.submit "Save", class: 'btn btn-success' %>
+-  </div>
+-<% end %>
+\ No newline at end of file
+diff --git a/app/views/wikis/_form.html.erb b/app/views/wikis/_form.html.erb
+deleted file mode 100644
+index 3523d04..0000000
+--- a/app/views/wikis/_form.html.erb
++++ /dev/null
+@@ -1,25 +0,0 @@
+-<%= form_for @wiki do |f| %>
+-  <div class="form-group">
+-    <%= f.label :title %>
+-    <%= f.text_field :title, class: 'form-control', placeholder: "Enter wiki title" %>
+-  </div>
+-
+-  <div class="form-group">
+-    <%= f.label :body %>
+-    <%= f.text_area :body, rows: 8, class: 'form-control', placeholder: "Enter wiki body" %>
+-  </div>
+-  
+-  <div class="form-group">
+-    <%= f.label :public, class: 'checkbox' do %>
+-      <%= f.check_box :public %> Public wiki
+-    <% end %>
+-    <%= render partial: 'collaborators/form', locals: { f: f } %>
+-  </div>
+-  
+-
+-  <%= f.submit "Save", class: 'btn btn-success' %>
+-  
+-<% end %>
+-
+-
+-  
+diff --git a/app/views/wikis/create.html.erb b/app/views/wikis/create.html.erb
+new file mode 100644
+index 0000000..ea82f82
+--- /dev/null
++++ b/app/views/wikis/create.html.erb
+@@ -0,0 +1,2 @@
++<h1>Wikis#create</h1>
++<p>Find me in app/views/wikis/create.html.erb</p>
+diff --git a/app/views/wikis/destroy.html.erb b/app/views/wikis/destroy.html.erb
+new file mode 100644
+index 0000000..0b4050e
+--- /dev/null
++++ b/app/views/wikis/destroy.html.erb
+@@ -0,0 +1,2 @@
++<h1>Wikis#destroy</h1>
++<p>Find me in app/views/wikis/destroy.html.erb</p>
+diff --git a/app/views/wikis/edit.html.erb b/app/views/wikis/edit.html.erb
+index 0266d7e..3dc1edf 100644
+--- a/app/views/wikis/edit.html.erb
++++ b/app/views/wikis/edit.html.erb
+@@ -1,2 +1,14 @@
+ <h1>Edit this wiki, baller.</h1>
+-<%= render partial: 'wikis/form', locals: { f: f } %>
++<%= form_for @wiki do |f| %>
++	<div class="form-group">
++	  <%= f.label :title %>
++	  <%= f.text_field :title, class: 'form-control', placeholder: "Enter wiki title" %>
++	</div>
++	<div class="form-group">
++	  <%= f.label :body %>
++	  <%= f.text_area :body, rows: 8, class: 'form-control', placeholder: "Enter wiki body" %>
++	</div>
++	<div class="form-group">
++	  <%= f.submit "Save", class: 'btn btn-success' %>
++	</div>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/wikis/new.html.erb b/app/views/wikis/new.html.erb
+index eb3d0ab..ab1387b 100644
+--- a/app/views/wikis/new.html.erb
++++ b/app/views/wikis/new.html.erb
+@@ -1 +1,9 @@
+-<%= render partial: 'form' %>
+\ No newline at end of file
++<%= form_for @wiki do |f| %>
++  <%= f.label :title %>
++  <%= f.text_field :title %>
++ 
++  <%= f.label :body %>
++  <%= f.text_area :body %>
++ 
++  <%= f.submit "Save" %>
++<% end %>
+\ No newline at end of file
+diff --git a/app/views/wikis/show.html.erb b/app/views/wikis/show.html.erb
+index f059011..6154569 100644
+--- a/app/views/wikis/show.html.erb
++++ b/app/views/wikis/show.html.erb
+@@ -4,9 +4,5 @@
+ </p>
+ <p>
+ 	<%= link_to "Edit", edit_wiki_path(@wiki)%>
+-	<%= link_to "Edit Wiki", edit_wiki_path, class: 'btn btn-primary' %>
+-      <% if (current_user.role == 'admin' && @wiki.public == false) || (current_user.role == 'premium' && @wiki.public == false && @wiki.user_id == current_user.id) %>
+-        <%= link_to "Add Collaborator", new_wiki_collaborator_path(@wiki), class: 'btn btn-info' %>
+-      <% end %>
+ 	<%= link_to "Delete Wiki", @wiki, method: :delete, data: {confirm: 'Are you sure you want to delete this post?'} %>
+ </p>
+\ No newline at end of file
+diff --git a/config/routes.rb b/config/routes.rb
+index 4f6c015..999ba72 100644
+--- a/config/routes.rb
++++ b/config/routes.rb
+@@ -1,8 +1,6 @@
+ Rails.application.routes.draw do
+ 
+-  resources :wikis do
+-    resources :collaborators, only: [:new, :create, :destroy]
+-  end
++  resources :wikis
+ 
+   devise_for :users
+   get 'about' => 'welcome#about'
+diff --git a/db/migrate/20170418172501_create_wikis.rb b/db/migrate/20170418172501_create_wikis.rb
+index d799cc1..8695bd0 100644
+--- a/db/migrate/20170418172501_create_wikis.rb
++++ b/db/migrate/20170418172501_create_wikis.rb
+@@ -5,7 +5,8 @@ class CreateWikis < ActiveRecord::Migration
+       t.text :body
+       t.boolean :private
+       t.references :user, index: true, foreign_key: true
+-      t.timestamps 
++
++      t.timestamps null: false
+     end
+   end
+ end
+diff --git a/db/migrate/20170526163901_create_users_and_wikis.rb b/db/migrate/20170526163901_create_users_and_wikis.rb
+deleted file mode 100644
+index bcecbe1..0000000
+--- a/db/migrate/20170526163901_create_users_and_wikis.rb
++++ /dev/null
+@@ -1,10 +0,0 @@
+-class CreateUsersAndWikis < ActiveRecord::Migration
+-  def change
+-    create_table :wiki_collaborators do |t|
+-      t.references :wiki, index: true
+-      t.references :user, index: true
+-      t.timestamps
+-    end
+-    add_index :wiki_collaborators, :id, unique: true
+-  end
+-end
+diff --git a/db/schema.rb b/db/schema.rb
+index 1fccb38..99236b9 100644
+--- a/db/schema.rb
++++ b/db/schema.rb
+@@ -11,7 +11,7 @@
+ #
+ # It's strongly recommended that you check this file into your version control system.
+ 
+-ActiveRecord::Schema.define(version: 20170526163901) do
++ActiveRecord::Schema.define(version: 20170515231045) do
+ 
+   create_table "users", force: :cascade do |t|
+     t.string   "email",                  default: "", null: false
+@@ -36,17 +36,6 @@ ActiveRecord::Schema.define(version: 20170526163901) do
+   add_index "users", ["email"], name: "index_users_on_email", unique: true
+   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+ 
+-  create_table "wiki_collaborators", force: :cascade do |t|
+-    t.integer  "wiki_id"
+-    t.integer  "user_id"
+-    t.datetime "created_at"
+-    t.datetime "updated_at"
+-  end
+-
+-  add_index "wiki_collaborators", ["id"], name: "index_wiki_collaborators_on_id", unique: true
+-  add_index "wiki_collaborators", ["user_id"], name: "index_wiki_collaborators_on_user_id"
+-  add_index "wiki_collaborators", ["wiki_id"], name: "index_wiki_collaborators_on_wiki_id"
+-
+   create_table "wikis", force: :cascade do |t|
+     t.string   "title"
+     t.text     "body"

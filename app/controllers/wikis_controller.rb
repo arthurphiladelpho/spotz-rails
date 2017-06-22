@@ -12,16 +12,13 @@ class WikisController < ApplicationController
   end
 
   def create
-    @user = current_user
-    @wiki = Wiki.new
+    @wiki = current_user.wikis.build
     @wiki.title = params[:wiki][:title]
     @wiki.body = params[:wiki][:body]
-    @wiki.public = params[:wiki][:public]
+    @wiki.public = true
     if @wiki.save
       flash[:notice] = "Wiki was saved."
-      #redirect_to @wiki
-      # call the collaborators controller create action
-      # create the collaborator here
+      redirect_to @wiki
     else
       flash.now[:alert] = "There was an error saving the post. Please try again."
       render :new
@@ -35,13 +32,25 @@ class WikisController < ApplicationController
 
   def edit
     @wiki = Wiki.find(params[:id])
-    @collaborator = Collaborator.new
+    @collaborator = WikiCollaborator.new
   end
 
   def update
     @wiki = Wiki.find(params[:id])
     @wiki.title = params[:wiki][:title]
     @wiki.body = params[:wiki][:body]
+    @wiki.public = params[:wiki][:public]
+    @wiki.collaborators.destroy_all
+    
+    # Create collaborator
+    params[:wiki][:user_id].each do |id|
+      # Create WikiCollborator record
+      next if id == ''
+      id.to_i
+
+      @collaborator = WikiCollaborator.find_or_create_by({ wiki: @wiki, user_id: id })  
+    end
+
     if @wiki.save
       flash[:notice] = "Wiki was updated."
       redirect_to @wiki
@@ -69,8 +78,6 @@ class WikisController < ApplicationController
       redirect_to @wiki
     end
   end
-
-  private
 
   def user_admin_or_premium?
     (current_user.admin? || current_user.premium?)

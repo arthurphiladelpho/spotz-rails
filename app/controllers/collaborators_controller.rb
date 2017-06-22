@@ -9,6 +9,7 @@ class CollaboratorsController < ApplicationController
     @wiki = Wiki.find(params[:wiki_id])
     @user = User.find_by(email: params[:email])
     @collaborator = WikiCollaborator.new({ wiki: @wiki, user: @user })
+    # @collaborator = @user.collaborators.build({ wiki: @wiki })
 
     if @collaborator.save
       flash[:notice] = "Collaborator was added to this wiki."

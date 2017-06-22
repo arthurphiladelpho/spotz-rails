@@ -1,2 +1,31 @@
-<h1>Edit this wiki, baller.</h1>
-<%= render partial: 'wikis/form', locals: { f: f } %>
+<h1>Edit this wiki, friend.</h1>
+<%= form_for @wiki do |f| %>
+  <div class="form-group">
+    <%= f.label :title %>
+    <%= f.text_field :title, class: 'form-control', placeholder: "Enter wiki title" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :body %>
+    <%= f.text_area :body, rows: 8, class: 'form-control', placeholder: "Enter wiki body" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :public %>
+    <%= f.check_box :public %>
+  </div>
+  
+  <div class="form-group">
+		<h3>Add Collaborators</h3>
+		  <%= f.collection_check_boxes(:user_id, User.all, :id, :email) do |i| %>
+        <% is_collaborator = WikiCollaborator.exists?(user_id: i, wiki_id: @wiki.id) %>
+		    <%= i.check_box value: is_collaborator %>
+		    <%= i.label %>
+        </br>
+		  <% end %>
+		
+	</div>
+
+  <%= f.submit "Save", class: 'btn btn-success' %>
+  
+<% end %>
