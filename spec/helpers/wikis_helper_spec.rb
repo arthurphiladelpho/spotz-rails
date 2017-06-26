@@ -11,5 +11,4 @@ require 'rails_helper'
 #   end
 # end
 RSpec.describe WikisHelper, type: :helper do
- 
 end

@@ -31,7 +31,6 @@ require 'rails_helper'
 #       end
 #     end
 
-
 #   describe "POST create" do
 #       it "increases the number of Wiki by 1" do
 #         expect{post :create, wiki: {title: RandomData.random_sentence, body: RandomData.random_paragraph}}.to change(Wiki,:count).by(1)
@@ -62,7 +61,7 @@ require 'rails_helper'
 #   end
 
 #   describe "GET edit" do
-#     it "returns http success" do       
+#     it "returns http success" do
 #       get :edit, {id: wiki.id}
 #       expect(response).to have_http_status(:success)
 #     end
@@ -72,9 +71,9 @@ require 'rails_helper'
 #     end
 #     it "assigns wiki to be updated to @wiki" do
 #       get :edit, {id: wiki.id}
- 
+
 #       wiki_instance = assigns(:wiki)
- 
+
 #       expect(wiki_instance.id).to eq wiki.id
 #       expect(wiki_instance.title).to eq wiki.title
 #       expect(wiki_instance.body).to eq wiki.body
@@ -85,7 +84,7 @@ require 'rails_helper'
 #      it "updates wiki with expected attributes" do
 #        new_title = RandomData.random_sentence
 #        new_body = RandomData.random_paragraph
- 
+
 #        put :update, id: wiki.id, wiki: {title: new_title, body: new_body}
 #        updated_wiki = assigns(:wiki)
 #        expect(updated_wiki.id).to eq wiki.id

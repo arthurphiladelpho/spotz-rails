@@ -3,8 +3,7 @@ class Wiki < ActiveRecord::Base
   has_many :wiki_collaborators
   has_many :collaborators, through: :wiki_collaborators, source: :user
 
-
   def self.public
-  	where(public: true)
-  end	
+    where(public: true)
+  end
 end

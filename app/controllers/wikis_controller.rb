@@ -1,5 +1,4 @@
 class WikisController < ApplicationController
-
   before_action :authorize_user, only: [:destroy]
 
   def index
@@ -17,10 +16,10 @@ class WikisController < ApplicationController
     @wiki.body = params[:wiki][:body]
     @wiki.public = true
     if @wiki.save
-      flash[:notice] = "Wiki was saved."
+      flash[:notice] = 'Wiki was saved.'
       redirect_to @wiki
     else
-      flash.now[:alert] = "There was an error saving the post. Please try again."
+      flash.now[:alert] = 'There was an error saving the post. Please try again.'
       render :new
     end
   end
@@ -41,21 +40,21 @@ class WikisController < ApplicationController
     @wiki.body = params[:wiki][:body]
     @wiki.public = params[:wiki][:public]
     @wiki.collaborators.destroy_all
-    
+
     # Create collaborator
     params[:wiki][:user_id].each do |id|
       # Create WikiCollborator record
       next if id == ''
       id.to_i
 
-      @collaborator = WikiCollaborator.find_or_create_by({ wiki: @wiki, user_id: id })  
+      @collaborator = WikiCollaborator.find_or_create_by(wiki: @wiki, user_id: id)
     end
 
     if @wiki.save
-      flash[:notice] = "Wiki was updated."
+      flash[:notice] = 'Wiki was updated.'
       redirect_to @wiki
     else
-      flash.now[:alert] = "There was an error saving the wiki. Please try again."
+      flash.now[:alert] = 'There was an error saving the wiki. Please try again.'
       render :edit
     end
   end
@@ -66,7 +65,7 @@ class WikisController < ApplicationController
       flash[:notice] = "\"#{@wiki.title}\" was deleted successfully."
       redirect_to wikis_path
     else
-      flash.now[:alert] = "There was an error deleting the wiki."
+      flash.now[:alert] = 'There was an error deleting the wiki.'
       render :show
     end
   end
@@ -74,13 +73,12 @@ class WikisController < ApplicationController
   def authorize_user
     @wiki = Wiki.find(params[:id])
     unless current_user.admin?
-      flash[:alert] = "You must be an admin to do that."
+      flash[:alert] = 'You must be an admin to do that.'
       redirect_to @wiki
     end
   end
 
   def user_admin_or_premium?
     (current_user.admin? || current_user.premium?)
-  end 
-
+  end
 end

@@ -8,5 +8,4 @@ class CollaborationPolicy < ApplicationPolicy
       scope
     end
   end
-
 end

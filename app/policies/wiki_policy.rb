@@ -1,13 +1,12 @@
 class WikiPolicy
+  attr_reader :user, :wiki
 
-	attr_reader :user, :wiki
+  def initialize(user, wiki)
+    @user = user
+    @wiki = wiki
+  end
 
-	def initialize(user, wiki)
-	  @user = user
-	  @wiki = wiki
-	end
-
-	class Scope
+  class Scope
     attr_reader :user, :scope
 
     def initialize(user, scope)
@@ -32,16 +31,15 @@ class WikiPolicy
     end
   end
 
-	def index?
-		@user.admin? || @user.premium?
-	end
+  def index?
+    @user.admin? || @user.premium?
+  end
 
-	def show?
-		@user.admin? || @user.premium?
-	end
+  def show?
+    @user.admin? || @user.premium?
+  end
 
-	def destroy?
-		@user.admin?
-	end
-
+  def destroy?
+    @user.admin?
+  end
 end
